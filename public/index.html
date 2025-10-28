@@ -1,98 +1,44 @@
 <!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL Injection Lernumgebung</title>
-    <link rel="stylesheet" href="/style.css">
-    <script defer src="/script.js"></script>
-</head>
-<body>
-    <header>
-        <h1>SQL Injection Lernumgebung</h1>
-        <p class="subtitle">
-            Diese Oberfläche verbindet sich automatisch mit der Variante des Servers (verwundbar oder gesichert),
-            von der sie ausgeliefert wird. Nutzen Sie die untenstehenden Formulare für eigene Tests.
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQLi Login Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel">
+        <h1>SQL Injection Login Demo</h1>
+        <p class="description">
+          Choose which backend to use and try logging in with normal credentials or
+          injected SQL such as <code>' OR '1'='1</code>.
         </p>
-        <div id="variantBanner" class="variant-banner">…</div>
-    </header>
-
-    <main>
-        <section class="card">
-            <h2>1. Anmeldung</h2>
-            <p>
-                Demonstriert eine klassische Login-SQL-Injection. Geben Sie beispielsweise <code>' OR '1'='1' --</code> als Benutzername ein,
-                um auf dem verwundbaren Server alle Datensätze zu erhalten.
-            </p>
-            <form id="loginForm" class="form">
-                <label>
-                    Benutzername
-                    <input type="text" name="username" placeholder="alice" required>
-                </label>
-                <label>
-                    Passwort
-                    <input type="text" name="password" placeholder="alice123" required>
-                </label>
-                <button type="submit">Anfrage senden</button>
-            </form>
-            <pre id="loginResult" class="result"></pre>
-        </section>
-
-        <section class="card">
-            <h2>2. Mitarbeitersuche</h2>
-            <p>
-                Über den Department-Filter können vertrauliche Informationen ausgelesen werden.
-                Auf dem verwundbaren Server liefert der Filterwert <code>' OR '1'='1</code> alle Mitarbeitenden.
-            </p>
-            <form id="searchForm" class="form">
-                <label>
-                    Department
-                    <input type="text" name="department" placeholder="Finance" required>
-                </label>
-                <button type="submit">Suchen</button>
-            </form>
-            <pre id="searchResult" class="result"></pre>
-        </section>
-
-        <section class="card">
-            <h2>3. Gehaltsänderung</h2>
-            <p>
-                Über diese Aktion lässt sich die Integrität der Daten angreifen. Versuchen Sie auf dem verwundbaren Server den Wert
-                <code>0; UPDATE employees SET salary = salary + 15000 WHERE department = 'Finance'; --</code> für das Feld <em>Neues Gehalt</em>.
-            </p>
-            <form id="salaryForm" class="form">
-                <label>
-                    Mitarbeiter-ID
-                    <input type="number" name="employeeId" placeholder="1" required>
-                </label>
-                <label>
-                    Neues Gehalt
-                    <input type="text" name="newSalary" placeholder="90000" required>
-                </label>
-                <button type="submit">Aktualisieren</button>
-            </form>
-            <pre id="salaryResult" class="result"></pre>
-        </section>
-
-        <section class="card">
-            <h2>4. Reportabfrage</h2>
-            <p>
-                Für einen Denial-of-Service kann ein Angreifer den Tabellen-Namen manipulieren, zum Beispiel
-                <code>employees; DROP TABLE employees; --</code>.
-            </p>
-            <form id="reportForm" class="form">
-                <label>
-                    Tabellenname
-                    <input type="text" name="tableName" placeholder="employees" required>
-                </label>
-                <button type="submit">Bericht laden</button>
-            </form>
-            <pre id="reportResult" class="result"></pre>
-        </section>
+        <form id="backend-form" class="backend-form">
+          <span>Backend:</span>
+          <label>
+            <input type="radio" name="backend" value="http://localhost:3000" checked />
+            Vulnerable (port 3000)
+          </label>
+          <label>
+            <input type="radio" name="backend" value="http://localhost:3001" />
+            Secure (port 3001)
+          </label>
+        </form>
+        <form id="login-form" class="login-form">
+          <label>
+            Username
+            <input type="text" name="username" autocomplete="off" required />
+          </label>
+          <label>
+            Password
+            <input type="text" name="password" autocomplete="off" required />
+          </label>
+          <button type="submit">Login</button>
+        </form>
+        <section id="result" class="result" aria-live="polite"></section>
+      </section>
     </main>
-
-    <footer>
-        <p>Seed-Daten liegen unter <code>Database/seedData.json</code>. Setzen Sie die Datenbanken mit <code>npm run reset:databases</code> zurück.</p>
-    </footer>
-</body>
+    <script src="/script.js" defer></script>
+  </body>
 </html>

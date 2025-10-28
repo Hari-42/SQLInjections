@@ -1,13 +1,42 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const { createVulnerableEngine } = require('../Database/vulnerableEngine');
-const { ensureStateFiles } = require('../Database/stateManager');
 
 const PORT = process.env.PORT || 3000;
 
-ensureStateFiles();
-const engine = createVulnerableEngine();
+const USERS = [
+  { username: 'alice', password: 'wonderland', role: 'admin' },
+  { username: 'bob', password: 'builder', role: 'user' }
+];
+
+function unsafeQuery(query) {
+  const whereMatch = query.match(/where\s+(.+)$/i);
+
+  if (!whereMatch) {
+    return { rows: USERS.map(({ username, role }) => ({ username, role })), expression: 'true' };
+  }
+
+  const condition = whereMatch[1];
+
+  const jsCondition = condition
+    .replace(/=/g, '===')
+    .replace(/\bAND\b/gi, '&&')
+    .replace(/\bOR\b/gi, '||')
+    .replace(/username/gi, 'user.username')
+    .replace(/password/gi, 'user.password')
+    .replace(/role/gi, 'user.role');
+
+  const filter = new Function('user', `return ${jsCondition};`);
+  const rows = USERS.filter((user) => {
+    try {
+      return filter(user);
+    } catch (error) {
+      throw new Error(`Failed to run SQL: ${error.message}`);
+    }
+  }).map(({ username, role }) => ({ username, role }));
+
+  return { rows, expression: jsCondition };
+}
 
 const app = express();
 
@@ -20,75 +49,28 @@ app.get('/api/variant', (_req, res) => {
 });
 
 app.post('/api/login', (req, res) => {
-  const { username = '', password = '' } = req.body;
-  const query = `SELECT id, username, role FROM users WHERE username = '${username}' AND password = '${password}'`;
+  const username = String(req.body.username || '');
+  const password = String(req.body.password || '');
+
+  const query = `SELECT username, role FROM users WHERE username = '${username}' AND password = '${password}'`;
 
   try {
-    const executions = engine.execute(query);
-    const result = executions.find((entry) => entry.type === 'select');
+    const { rows, expression } = unsafeQuery(query);
 
-    if (result && result.rows.length > 0) {
+    if (rows.length > 0) {
       return res.json({
         success: true,
         query,
-        executions,
-        data: result.rows,
-        message: 'Login erfolgreich (verwundbare Variante)'
+        expression,
+        data: rows,
+        message: 'Login succeeded on vulnerable server.'
       });
     }
 
-    return res.status(401).json({
-      success: false,
-      query,
-      executions,
-      message: 'Ungültige Anmeldedaten.'
-    });
+    return res.status(401).json({ success: false, query, expression, message: 'Invalid credentials.' });
   } catch (error) {
-    return res.status(500).json({ success: false, query, error: error.message });
+    return res.status(500).json({ success: false, query, message: error.message });
   }
-});
-
-app.get('/api/employees', (req, res) => {
-  const { department = '' } = req.query;
-  const query = `SELECT id, fullName, department, salary, email FROM employees WHERE department = '${department}'`;
-
-  try {
-    const executions = engine.execute(query);
-    const result = executions.find((entry) => entry.type === 'select');
-    return res.json({ success: true, query, executions, data: result ? result.rows : [] });
-  } catch (error) {
-    return res.status(500).json({ success: false, query, error: error.message });
-  }
-});
-
-app.post('/api/update-salary', (req, res) => {
-  const { employeeId = '', newSalary = '' } = req.body;
-  const query = `UPDATE employees SET salary = ${newSalary} WHERE id = ${employeeId}`;
-
-  try {
-    const executions = engine.execute(query);
-    const updateResult = executions.find((entry) => entry.type === 'update');
-    return res.json({ success: true, query, executions, changes: updateResult ? updateResult.changes : 0 });
-  } catch (error) {
-    return res.status(500).json({ success: false, query, error: error.message });
-  }
-});
-
-app.post('/api/report', (req, res) => {
-  const { tableName = '' } = req.body;
-  const query = `SELECT * FROM ${tableName}`;
-
-  try {
-    const executions = engine.execute(query);
-    return res.json({ success: true, query, executions });
-  } catch (error) {
-    return res.status(500).json({ success: false, query, error: error.message });
-  }
-});
-
-app.post('/api/reload-state', (_req, res) => {
-  engine.reload();
-  res.json({ success: true, message: 'State reloaded from disk.' });
 });
 
 app.get('*', (_req, res) => {

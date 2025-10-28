@@ -1,102 +1,61 @@
-const resultFormatter = new Intl.DateTimeFormat('de-CH', {
-  dateStyle: 'short',
-  timeStyle: 'medium'
-});
+const backendRadios = Array.from(document.querySelectorAll('input[name="backend"]'));
+const loginForm = document.getElementById('login-form');
+const resultBox = document.getElementById('result');
 
-function stringifyResult(data) {
-  if (typeof data === 'string') {
-    return data;
-  }
+let currentBackend = backendRadios.find((radio) => radio.checked)?.value || '';
 
-  try {
-    return JSON.stringify(data, null, 2);
-  } catch (error) {
-    return String(data);
-  }
-}
-
-async function sendRequest(url, options = {}) {
-  const config = { method: 'GET', headers: {}, ...options };
-
-  if (config.body && typeof config.body !== 'string') {
-    config.headers['Content-Type'] = 'application/json';
-    config.body = JSON.stringify(config.body);
-  }
-
-  const response = await fetch(url, config);
-  const text = await response.text();
-  let payload;
-
-  try {
-    payload = JSON.parse(text);
-  } catch (error) {
-    payload = text;
-  }
-
-  if (!response.ok) {
-    const message = typeof payload === 'object' && payload !== null && payload.message
-      ? payload.message
-      : 'Anfrage fehlgeschlagen.';
-    throw new Error(`${response.status}: ${message}\nAntwort: ${stringifyResult(payload)}`);
-  }
-
-  return payload;
-}
-
-function attachHandler(formId, resultId, { method, path, buildUrl, buildBody }) {
-  const form = document.getElementById(formId);
-  const result = document.getElementById(resultId);
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    result.textContent = 'Sende Anfrage…';
-
-    const formData = new FormData(form);
-    const entries = Object.fromEntries(formData.entries());
-
-    try {
-      const url = buildUrl ? buildUrl(entries) : path;
-      const body = buildBody ? buildBody(entries) : entries;
-      const response = await sendRequest(url, { method, body: method === 'GET' ? undefined : body });
-      result.textContent = stringifyResult(response);
-    } catch (error) {
-      result.textContent = error.message;
+backendRadios.forEach((radio) => {
+  radio.addEventListener('change', () => {
+    if (radio.checked) {
+      currentBackend = radio.value;
+      showMessage(`Using ${radio.value.includes('3000') ? 'vulnerable' : 'secure'} backend.`, 'info');
     }
   });
-}
+});
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const banner = document.getElementById('variantBanner');
+loginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
 
-  try {
-    const { variant } = await sendRequest('/api/variant');
-    const timestamp = resultFormatter.format(new Date());
-    banner.textContent = `Aktueller Servermodus: ${variant === 'secure' ? 'gesichert' : 'verwundbar'} (Stand ${timestamp})`;
-    banner.dataset.variant = variant;
-  } catch (error) {
-    banner.textContent = 'Variante konnte nicht ermittelt werden.';
-    console.error(error);
+  if (!currentBackend) {
+    showMessage('Please choose a backend server.', 'error');
+    return;
   }
 
-  attachHandler('loginForm', 'loginResult', {
-    method: 'POST',
-    path: '/api/login'
-  });
+  const formData = new FormData(loginForm);
+  const payload = Object.fromEntries(formData.entries());
 
-  attachHandler('searchForm', 'searchResult', {
-    method: 'GET',
-    path: '/api/employees',
-    buildUrl: (entries) => `/api/employees?department=${encodeURIComponent(entries.department)}`,
-    buildBody: () => undefined
-  });
+  try {
+    const response = await fetch(`${currentBackend}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  attachHandler('salaryForm', 'salaryResult', {
-    method: 'POST',
-    path: '/api/update-salary'
-  });
+    const data = await response.json();
 
-  attachHandler('reportForm', 'reportResult', {
-    method: 'POST',
-    path: '/api/report'
-  });
+    if (!response.ok) {
+      showMessage(`${data.message || 'Request failed.'}\nQuery: ${data.query || 'N/A'}`, 'error');
+      return;
+    }
+
+    const details = [];
+    if (data.query) {
+      details.push(`Query: ${data.query}`);
+    }
+    if (Array.isArray(data.parameters)) {
+      details.push(`Parameters: ${JSON.stringify(data.parameters)}`);
+    }
+    if (Array.isArray(data.data)) {
+      details.push(`Rows: ${JSON.stringify(data.data)}`);
+    }
+
+    showMessage([data.message, ...details].filter(Boolean).join('\n'), 'success');
+  } catch (error) {
+    showMessage(`Could not reach server: ${error.message}`, 'error');
+  }
 });
+
+function showMessage(text, variant) {
+  resultBox.textContent = text;
+  resultBox.setAttribute('data-variant', variant);
+}
