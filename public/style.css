@@ -40,7 +40,12 @@ h1 {
   font-size: 0.95rem;
 }
 
-.backend-form,
+.variant {
+  margin: 0;
+  font-weight: 600;
+  text-align: center;
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
@@ -53,12 +58,6 @@ h1 {
   gap: 8px;
 }
 
-.login-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-weight: 600;
-}
 
 input[type='text'] {
   padding: 8px;

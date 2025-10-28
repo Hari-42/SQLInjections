@@ -11,20 +11,11 @@
       <section class="panel">
         <h1>SQL Injection Login Demo</h1>
         <p class="description">
-          Choose which backend to use and try logging in with normal credentials or
-          injected SQL such as <code>' OR '1'='1</code>.
+          Starte den verwundbaren Server auf Port 3000 oder den gesicherten Server auf
+          Port 3001 und beobachte, wie sich identische Eingaben auf die SQL-Abfragen
+          auswirken.
         </p>
-        <form id="backend-form" class="backend-form">
-          <span>Backend:</span>
-          <label>
-            <input type="radio" name="backend" value="http://localhost:3000" checked />
-            Vulnerable (port 3000)
-          </label>
-          <label>
-            <input type="radio" name="backend" value="http://localhost:3001" />
-            Secure (port 3001)
-          </label>
-        </form>
+       <p id="variant-label" class="variant" aria-live="polite"></p>
         <form id="login-form" class="login-form">
           <label>
             Username
