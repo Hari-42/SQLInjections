@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQLi Login Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel">
+        <h1>SQL Injection Login Demo</h1>
+        <p class="description">
+          Starte den verwundbaren Server auf Port 3000 oder den gesicherten Server auf
+          Port 3001 und beobachte, wie sich identische Eingaben auf die SQL-Abfragen
+          auswirken.
+        </p>
+       <p id="variant-label" class="variant" aria-live="polite"></p>
+        <form id="login-form" class="login-form">
+          <label>
+            Username
+            <input type="text" name="username" autocomplete="off" required />
+          </label>
+          <label>
+            Password
+            <input type="text" name="password" autocomplete="off" required />
+          </label>
+          <button type="submit">Login</button>
+        </form>
+        <section id="result" class="result" aria-live="polite"></section>
+      </section>
+    </main>
+    <script src="/script.js" defer></script>
+  </body>
+</html>
