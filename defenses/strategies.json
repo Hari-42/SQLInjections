@@ -1,0 +1,15 @@
+{
+  "confidentiality": {
+    "description": "Verwendet Prepared Statements und Input-Validierung gegen Datenabfluss.",
+    "username": "admin",
+    "password": "password123"
+  },
+  "availability": {
+    "description": "Blockiert zerstörerische Statements durch syntaktische Prüfung.",
+    "rawQuery": "SELECT COUNT(*) AS userCount FROM users;"
+  },
+  "integrity": {
+    "description": "Aktualisiert Benutzerpasswörter ausschliesslich über whitelistsierte Stored Procedures.",
+    "procedure": "CALL login_user('admin', 'password123')"
+  }
+}

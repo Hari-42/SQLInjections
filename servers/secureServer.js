@@ -1,42 +1,95 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
 const bodyParser = require('body-parser');
+const path = require('path');
+const mysql = require('mysql2/promise');
+
+const PORT = 3001;
 
 const app = express();
-
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Connection pool
 const pool = mysql.createPool({
-    // enter your data to connect to the database
     host: 'localhost',
     user: 'root',
     password: '255070',
-    database: 'express_login_demo',
+    database: 'sql_injection_demo',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
-    });
-// Login route (using parameterized queries to prevent SQL injection)
-app.post('/login', async (req, res) => {
+});
 
-    const { username, password } = req.body;
-try {
-        const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
-const [result] = await pool.execute(query, [username, password]);
-console.log(result);
-if (result.length > 0) {
-            let userList = result.map(user => `${user.username} (${user.password})`);
-            res.send(userList.join('<br>'));
+const INPUT_PATTERN = /^[\w@.-]{1,40}$/i;
+
+function escapeInput(value) {
+    return value.replace(/[\\']/g, (character) => `\\${character}`);
+}
+
+function validateCredentials(username, password) {
+    const violations = [];
+    if (!INPUT_PATTERN.test(username)) {
+        violations.push('Username enthält ungültige Zeichen.');
+    }
+    if (!INPUT_PATTERN.test(password)) {
+        violations.push('Password enthält ungültige Zeichen.');
+    }
+    return violations;
+}
+
+app.post('/login', async (req, res) => {
+    const { username = '', password = '' } = req.body;
+    const violations = validateCredentials(username, password);
+    if (violations.length > 0) {
+        return res.status(400).json({ status: 'error', message: violations.join(' ') });
+    }
+
+    const escapedUsername = escapeInput(username);
+    const escapedPassword = escapeInput(password);
+
+    try {
+        const [rows] = await pool.execute('CALL login_user(?, ?)', [username, password]);
+        const users = rows[0] || [];
+        if (users.length > 0) {
+            res.json({
+                status: 'success',
+                message: 'Login erfolgreich.',
+                safeQuery: `CALL login_user('${escapedUsername}', '${escapedPassword}')`,
+                users
+            });
         } else {
-            res.send('Login failed');
+            res.status(401).json({
+                status: 'error',
+                message: 'Login fehlgeschlagen.',
+                safeQuery: `CALL login_user('${escapedUsername}', '${escapedPassword}')`
+            });
         }
-    } catch (err) {
-        console.error('Error executing query:', err);
-        res.status(500).send('Server error');
+    } catch (error) {
+        console.error('Fehler bei sicherer Abfrage:', error);
+        res.status(500).json({ status: 'error', message: 'Serverfehler.' });
     }
 });
-// Start the server
-app.listen(3001, () => {
-    console.log('Secure server running on http://localhost:3001');
+
+app.post('/admin/safe-exec', async (req, res) => {
+    const { rawQuery = '' } = req.body;
+    if (!rawQuery.trim()) {
+        return res.status(400).json({ status: 'error', message: 'Es muss ein SQL-Statement übergeben werden.' });
+    }
+
+    const prohibitedPattern = /(drop\s+table|update\s+users|delete\s+from)/i;
+    if (prohibitedPattern.test(rawQuery)) {
+        return res.status(400).json({ status: 'error', message: 'Verdächtiges Statement wurde blockiert.' });
+    }
+
+    try {
+        await pool.execute(rawQuery);
+        res.json({ status: 'success', message: 'Statement sicher ausgeführt.' });
+    } catch (error) {
+        console.error('Fehler bei sicherer manueller Ausführung:', error);
+        res.status(500).json({ status: 'error', message: 'Ausführung fehlgeschlagen.' });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Sicherer Server läuft auf http://localhost:${PORT}`);
 });

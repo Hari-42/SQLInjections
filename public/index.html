@@ -1,33 +1,41 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SQLi Login Demo</title>
+    <title>SQL Injection Lernoberfläche</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <main class="page">
       <section class="panel">
-        <h1>SQL Injection Login Demo</h1>
+        <h1>SQL Injection Lernoberfläche</h1>
         <p class="description">
-          Starte den verwundbaren Server auf Port 3000 oder den gesicherten Server auf
-          Port 3001 und beobachte, wie sich identische Eingaben auf die SQL-Abfragen
-          auswirken.
+          Diese minimalistische Oberfläche funktioniert sowohl mit dem unsicheren
+          (Port&nbsp;3000) als auch dem gesicherten Server (Port&nbsp;3001).
+          Sende Logins, um den Unterschied der SQL-Abfragen zu beobachten.
         </p>
-       <p id="variant-label" class="variant" aria-live="polite"></p>
+        <p id="variant-label" class="variant" aria-live="polite"></p>
         <form id="login-form" class="login-form">
-          <label>
-            Username
-            <input type="text" name="username" autocomplete="off" required />
+          <label class="field">
+            <span>Username</span>
+            <input id="username" type="text" name="username" autocomplete="off" required />
           </label>
-          <label>
-            Password
-            <input type="text" name="password" autocomplete="off" required />
+          <label class="field">
+            <span>Password</span>
+            <input id="password" type="text" name="password" autocomplete="off" required />
           </label>
-          <button type="submit">Login</button>
+          <button type="submit">Anmelden</button>
         </form>
-        <section id="result" class="result" aria-live="polite"></section>
+        <section class="panel panel--secondary" aria-live="polite">
+          <h2>Ergebnis</h2>
+          <pre id="result" class="result" data-variant="info">Noch keine Anfrage gesendet.</pre>
+        </section>
+        <section class="panel panel--secondary" aria-live="polite">
+          <h2>Ausgeführte SQL</h2>
+          <pre id="sql-query" class="result" data-variant="info">Wird nach der ersten Anfrage angezeigt.</pre>
+        </section>
       </section>
     </main>
     <script src="/script.js" defer></script>
