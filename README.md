@@ -12,7 +12,7 @@ Alles läuft lokal auf deinem Rechner. Keine fancy Oberfläche – nur einfache 
 
 1) Repository klonen und ins Projekt wechseln
 ```bash
-git clone [<DEIN_GIT_REPO_URL>](https://github.com/Hari-42/SQLInjections.git)
+git clone https://github.com/Hari-42/SQLInjections.git
 cd SQLInjections
 ```
 
