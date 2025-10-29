@@ -1,3 +1,4 @@
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
@@ -8,11 +9,12 @@ async function resetDatabase() {
     const sqlContent = fs.readFileSync(SQL_FILE, 'utf8');
 
     const connection = await mysql.createConnection({
-        host: 'localhost',
-        user: 'root',
-        password: '255070',
-        multipleStatements: true
-    });
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '255070',
+    port: Number(process.env.DB_PORT || 3306),
+    multipleStatements: true
+});
 
     try {
         await connection.query(sqlContent);

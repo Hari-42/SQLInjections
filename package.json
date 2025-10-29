@@ -6,13 +6,20 @@
   "scripts": {
     "start:vulnerable": "node servers/vulnerableServer.js",
     "start:secure": "node servers/secureServer.js",
-    "reset:databases": "node Database/resetDatabases.js"
+    "reset:databases": "node Database/resetDatabase.js",
+    "attack:C": "node attacks/startSQLAttackConfidentiality.js",
+    "attack:A": "node attacks/startSQLAttackAvailability.js",
+    "attack:I": "node attacks/startSQLAttackIntegrity.js",
+    "defense:C": "node defenses/counterSQLAttackConfidentiality.js",
+    "defense:A": "node defenses/counterSQLAttackAvailability.js",
+    "defense:I": "node defenses/counterSQLAttackIntegrity.js"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "mysql2": "^3.6.3"
+    "mysql2": "^3.6.3",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

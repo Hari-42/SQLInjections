@@ -17,6 +17,15 @@ async function postJson(url, body) {
     return response.json();
 }
 
+function writeReport(kind, payload, result) {
+    const reportsDir = path.join(__dirname, '..', 'reports', 'defenses');
+    fs.mkdirSync(reportsDir, { recursive: true });
+    const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-${kind}.json`;
+    const filePath = path.join(reportsDir, fileName);
+    fs.writeFileSync(filePath, JSON.stringify({ kind, payload, result }, null, 2));
+    console.log('Report gespeichert unter:', filePath);
+}
+
 async function protectConfidentiality(strategy) {
     console.log('Starte Gegenmassnahme für Vertraulichkeit...');
     console.log(strategy.description);
@@ -25,6 +34,7 @@ async function protectConfidentiality(strategy) {
         password: strategy.password
     });
     console.log('Antwort des gesicherten Servers:', result);
+    writeReport('confidentiality', strategy, result);
 }
 
 async function protectAvailability(strategy) {
@@ -38,6 +48,7 @@ async function protectAvailability(strategy) {
         rawQuery: strategy.rawQuery
     });
     console.log('Erlaubter Wartungsbefehl:', allowed);
+    writeReport('availability', strategy, { blocked, allowed });
 }
 
 async function protectIntegrity(strategy) {
@@ -51,6 +62,7 @@ async function protectIntegrity(strategy) {
         rawQuery: strategy.procedure
     });
     console.log('Zulässiger Stored-Procedure-Aufruf:', allowed);
+    writeReport('integrity', strategy, { blocked, allowed });
 }
 
 async function main(customType) {

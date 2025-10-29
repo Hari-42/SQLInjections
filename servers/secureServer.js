@@ -1,6 +1,6 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const path = require('path');
 const mysql = require('mysql2/promise');
 
 const PORT = 3001;
@@ -8,13 +8,13 @@ const PORT = 3001;
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '255070',
-    database: 'sql_injection_demo',
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '255070',
+    database: process.env.DB_NAME || 'sql_injection_demo',
+    port: Number(process.env.DB_PORT || 3306),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -36,6 +36,19 @@ function validateCredentials(username, password) {
     }
     return violations;
 }
+
+app.get('/', (_req, res) => {
+    res.json({
+        status: 'running',
+        server: 'secure',
+        description: 'Gehärteter Demo-Server mit Abwehrmassnahmen.',
+        endpoints: {
+            login: 'POST /login',
+            safeExecution: 'POST /admin/safe-exec'
+        }
+    });
+
+});
 
 app.post('/login', async (req, res) => {
     const { username = '', password = '' } = req.body;

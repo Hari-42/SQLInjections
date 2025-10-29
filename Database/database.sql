@@ -12,9 +12,8 @@ INSERT INTO users (username, password) VALUES
     ('admin', 'password123'),
     ('fritzli', 'password456'),
     ('student', 'sqlrocks');
-
-DELIMITER //
-CREATE OR REPLACE PROCEDURE login_user (
+DROP PROCEDURE IF EXISTS login_user;
+CREATE PROCEDURE login_user (
     IN p_username VARCHAR(100),
     IN p_password VARCHAR(100)
 )
@@ -23,5 +22,5 @@ BEGIN
     FROM users
     WHERE username = p_username
       AND password = p_password;
-END //
-DELIMITER ;
+END;
+
