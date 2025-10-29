@@ -1,77 +1,42 @@
-const path = require('path');
 const express = require('express');
-const cors = require('cors');
-
-const PORT = process.env.PORT || 3001;
-
-const USERS = [
-  { username: 'alice', password: 'wonderland', role: 'admin' },
-  { username: 'bob', password: 'builder', role: 'user' }
-];
-
-function executeSafeLoginQuery(username, password) {
-  const query = 'SELECT username, role FROM users WHERE username = ? AND password = ?';
-  const parameters = [username, password];
-  const rows = USERS.filter(
-    (user) => user.username === username && user.password === password
-  ).map(({ username: name, role }) => ({ username: name, role }));
-
-  return { query, parameters, rows };
-}
+const mysql = require('mysql2/promise');
+const bodyParser = require('body-parser');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-
-app.get('/api/variant', (_req, res) => {
-  res.json({ variant: 'secure' });
-});
-
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body || {};
-
-  if (typeof username !== 'string' || typeof password !== 'string') {
-    return res.status(400).json({ success: false, message: 'Ungültige Eingabe.' });
-  }
-
-  const trimmedUsername = username.trim();
-  const trimmedPassword = password.trim();
-  const { query, parameters, rows } = executeSafeLoginQuery(trimmedUsername, trimmedPassword);
-
-  if (trimmedUsername.length === 0 || trimmedPassword.length === 0) {
-    return res.status(400).json({
-      success: false,
-      query,
-      parameters,
-      message: 'Benutzername und Passwort dürfen nicht leer sein.'
+// Connection pool
+const pool = mysql.createPool({
+    // enter your data to connect to the database
+    host: 'localhost',
+    user: 'root',
+    password: '255070',
+    database: 'express_login_demo',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
     });
-  }
+// Login route (using parameterized queries to prevent SQL injection)
+app.post('/login', async (req, res) => {
 
-  if (rows.length === 0) {
-    return res.status(401).json({
-      success: false,
-      query,
-      parameters,
-      message: 'Anmeldung fehlgeschlagen (sicherer Server).'
-    });
-  }
-
-  return res.json({
-    success: true,
-    query,
-    parameters,
-    data: rows,
-    message: 'Login erfolgreich auf dem sicheren Server.'
-  });
+    const { username, password } = req.body;
+try {
+        const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
+const [result] = await pool.execute(query, [username, password]);
+console.log(result);
+if (result.length > 0) {
+            let userList = result.map(user => `${user.username} (${user.password})`);
+            res.send(userList.join('<br>'));
+        } else {
+            res.send('Login failed');
+        }
+    } catch (err) {
+        console.error('Error executing query:', err);
+        res.status(500).send('Server error');
+    }
 });
-
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`Secure server listening on http://localhost:${PORT}`);
+// Start the server
+app.listen(3001, () => {
+    console.log('Secure server running on http://localhost:3001');
 });

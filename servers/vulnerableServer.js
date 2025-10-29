@@ -1,82 +1,40 @@
-const path = require('path');
 const express = require('express');
-const cors = require('cors');
-
-const PORT = process.env.PORT || 3000;
-
-const USERS = [
-  { username: 'alice', password: 'wonderland', role: 'admin' },
-  { username: 'bob', password: 'builder', role: 'user' }
-];
-
-function unsafeQuery(query) {
-  const whereMatch = query.match(/where\s+(.+)$/i);
-
-  if (!whereMatch) {
-    return { rows: USERS.map(({ username, role }) => ({ username, role })), expression: 'true' };
-  }
-
-  const condition = whereMatch[1];
-
-  const jsCondition = condition
-    .replace(/=/g, '===')
-    .replace(/\bAND\b/gi, '&&')
-    .replace(/\bOR\b/gi, '||')
-    .replace(/username/gi, 'user.username')
-    .replace(/password/gi, 'user.password')
-    .replace(/role/gi, 'user.role');
-
-  const filter = new Function('user', `return ${jsCondition};`);
-  const rows = USERS.filter((user) => {
-    try {
-      return filter(user);
-    } catch (error) {
-      throw new Error(`Failed to run SQL: ${error.message}`);
-    }
-  }).map(({ username, role }) => ({ username, role }));
-
-  return { rows, expression: jsCondition };
-}
+const mysql = require('mysql2/promise');
+const bodyParser = require('body-parser');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/api/variant', (_req, res) => {
-  res.json({ variant: 'vulnerable' });
+// Connection pool
+const pool = mysql.createPool({
+    // enter your data to connect to the database
+    host: 'localhost',
+    user: 'root',
+    password: '255070',
+    database: 'express_login_demo',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
-
-app.post('/api/login', (req, res) => {
-  const username = String(req.body.username || '');
-  const password = String(req.body.password || '');
-
-  const query = `SELECT username, role FROM users WHERE username = '${username}' AND password = '${password}'`;
-
-  try {
-    const { rows, expression } = unsafeQuery(query);
-
-    if (rows.length > 0) {
-      return res.json({
-        success: true,
-        query,
-        expression,
-        data: rows,
-        message: 'Login succeeded on vulnerable server.'
-      });
+// Login route (vulnerable to SQL injection)
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+ try {
+        const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+const [result] = await pool.query(query);
+if (result.length > 0) {
+            let userList = result.map(user => `${user.username} (${user.password})`);
+            res.send(userList.join('<br>'));
+        } else {
+            res.send('Login failed');
+        }
+    } catch (err) {
+        console.error('Error executing query:', err);
+        res.status(500).send('Server error');
     }
-
-    return res.status(401).json({ success: false, query, expression, message: 'Invalid credentials.' });
-  } catch (error) {
-    return res.status(500).json({ success: false, query, message: error.message });
-  }
 });
-
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`Vulnerable server listening on http://localhost:${PORT}`);
+// Start the server
+app.listen(3000, () => {
+    console.log('Server running on http://localhost:3000');
 });
