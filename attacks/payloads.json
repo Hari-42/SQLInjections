@@ -1,0 +1,16 @@
+
+{
+  "confidentiality": {
+    "description": "Liest alle Benutzer durch einen tautologischen WHERE-Teil aus.",
+    "username": "' OR 1=1 #",
+    "password": "irrelevant"
+  },
+  "availability": { 
+    "description": "Versucht, die Users-Tabelle zu löschen und so das System lahmzulegen.",
+    "rawQuery": "DROP TABLE users;"
+  },
+  "integrity": {
+    "description": "Ändert das Passwort des Admins ohne Berechtigung.",
+    "rawQuery": "UPDATE users SET password='owned' WHERE username='admin';"
+  }
+}
