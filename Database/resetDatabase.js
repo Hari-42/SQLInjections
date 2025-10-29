@@ -1,4 +1,12 @@
 require('dotenv').config();
+/*
+Filename: resetDatabase.js
+Kurzbeschreibung: Setzt die Demo-Datenbank neu auf und erstellt Stored Procedures.
+Aufrufparameter: keine
+Autor: Matteo
+Datum: 2025-10-29
+*/
+
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');

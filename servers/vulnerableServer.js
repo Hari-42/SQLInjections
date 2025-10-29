@@ -1,3 +1,11 @@
+/*
+Filename: vulnerableServer.js
+Kurzbeschreibung: Unsicherer Demo-Server mit absichtlichen SQLi-Schwachstellen.
+Aufrufparameter: keine (PORT 3000)
+Autor: Sandro 
+Datum: 2025-10-29
+*/
+
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');

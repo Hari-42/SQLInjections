@@ -1,3 +1,11 @@
+/*
+Filename: startSQLAttack.js
+Kurzbeschreibung: Parametrisierbares Angriffsscript (C|A|I) gegen den verwundbaren Server.
+Aufrufparameter: C (Confidentiality) | A (Availability) | I (Integrity)
+Autor: Sandro  
+Datum: 2025-10-29
+*/
+
 const fs = require('fs');
 const path = require('path');
 

@@ -1,3 +1,11 @@
+/*
+Filename: counterSQLAttack.js
+Kurzbeschreibung: Parametrisierbares Verteidigungsscript (C|A|I) gegen den gesicherten Server.
+Aufrufparameter: C (Confidentiality) | A (Availability) | I (Integrity)
+Autor: Hari
+Datum: 2025-10-29
+*/
+
 const fs = require('fs');
 const path = require('path');
 

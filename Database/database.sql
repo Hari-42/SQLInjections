@@ -1,3 +1,8 @@
+-- Filename: database.sql
+-- Kurzbeschreibung: Datenbankschema und Demo-Daten inkl. Stored Procedure für Login.
+-- Autor: Matteo
+-- Datum: 2025-10-29
+
 DROP DATABASE IF EXISTS sql_injection_demo;
 CREATE DATABASE sql_injection_demo;
 USE sql_injection_demo;
